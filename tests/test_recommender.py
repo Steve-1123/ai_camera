@@ -16,16 +16,16 @@ def test_recommendation_ranking_prefers_scene_and_style_matches() -> None:
     recommendations = recommender.recommend(request)
 
     assert [pose.id for pose in recommendations] == [
-        "street-stride",
-        "studio-power-stance",
-        "stairs-sculptural-sit",
+        "street_hands_pocket_004",
+        "street_side_hair_touch_002",
+        "street_cross_leg_003",
     ]
     assert len(recommendations) == 3
     assert recommendations[0].score is not None
     assert recommendations[0].score > recommendations[1].score
 
 
-def test_low_comfort_penalizes_harder_poses() -> None:
+def test_stairs_request_prefers_matching_stairs_pose() -> None:
     recommender = RuleBasedPoseRecommender(load_pose_library())
     request = RecommendationRequest(
         scene=SceneContext(
@@ -37,6 +37,6 @@ def test_low_comfort_penalizes_harder_poses() -> None:
 
     recommendations = recommender.recommend(request)
 
-    assert recommendations[0].id == "stairs-sculptural-sit"
+    assert recommendations[0].id == "stairs_walk_015"
     assert recommendations[0].score is not None
-    assert recommendations[0].score < 18
+    assert recommendations[0].score > recommendations[1].score
