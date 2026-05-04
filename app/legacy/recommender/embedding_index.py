@@ -23,7 +23,8 @@ class PoseEmbeddingIndex:
 
         query_vector = self._vectorizer.transform([query])
         similarities = cosine_similarity(query_vector, self._matrix).flatten()
-        return [
+        results = [
             (pose, float(similarity))
             for pose, similarity in zip(self._poses, similarities)
         ]
+        return sorted(results, key=lambda item: item[1], reverse=True)

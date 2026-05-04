@@ -11,6 +11,8 @@ from PIL import Image, UnidentifiedImageError
 from app.schemas import ImageInfo
 
 logger = logging.getLogger(__name__)
+MAX_UPLOAD_BYTES = 20 * 1024 * 1024
+READ_CHUNK_BYTES = 1024 * 1024
 
 
 class ImageLoadError(ValueError):
@@ -24,7 +26,17 @@ class LoadedImage:
 
 
 async def load_upload_image(upload_file: UploadFile) -> LoadedImage:
-    raw = await upload_file.read()
+    chunks: list[bytes] = []
+    total_bytes = 0
+    while chunk := await upload_file.read(READ_CHUNK_BYTES):
+        total_bytes += len(chunk)
+        if total_bytes > MAX_UPLOAD_BYTES:
+            raise ImageLoadError(
+                f"Uploaded image is too large. Maximum size is {MAX_UPLOAD_BYTES // (1024 * 1024)}MB."
+            )
+        chunks.append(chunk)
+
+    raw = b"".join(chunks)
     if not raw:
         raise ImageLoadError("Uploaded file is empty or cannot be read as an image.")
 

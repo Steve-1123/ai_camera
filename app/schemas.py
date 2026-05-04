@@ -11,10 +11,10 @@ class ImageInfo(BaseModel):
 
 class Landmark(BaseModel):
     name: str
-    x: float
-    y: float
+    x: float = Field(ge=0.0, le=1.0)
+    y: float = Field(ge=0.0, le=1.0)
     z: float
-    visibility: float
+    visibility: float = Field(ge=0.0, le=1.0)
 
 
 class PoseEstimationResult(BaseModel):
@@ -38,4 +38,3 @@ class AnalyzeImageResponse(BaseModel):
     image_info: ImageInfo
     pose: PoseEstimationResult
     scene: SceneClassificationResult
-

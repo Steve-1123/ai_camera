@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import logging
+import threading
 from importlib import import_module
 
 import numpy as np
-from PIL import Image
 
 from app.schemas import Landmark, PoseEstimationResult
+from app.vision.image_utils import ensure_rgb_uint8, resize_longest_side
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,8 @@ class PoseEstimator:
 
     def __init__(self) -> None:
         self._mp_pose = None
+        self._pose = None
+        self._lock = threading.Lock()
         self._mediapipe_import_error = None
         try:
             self._mp_pose = import_module("mediapipe.solutions.pose")
@@ -39,6 +42,12 @@ class PoseEstimator:
 
         self._mediapipe_available = True
 
+    def close(self) -> None:
+        with self._lock:
+            if self._pose is not None:
+                self._pose.close()
+                self._pose = None
+
     def estimate(self, image: np.ndarray) -> PoseEstimationResult:
         if not self._mediapipe_available or self._mp_pose is None:
             self._log_debug(image=image, detected_landmarks=False)
@@ -50,11 +59,8 @@ class PoseEstimator:
 
         rgb_image = self._prepare_rgb_image(image)
         try:
-            with self._mp_pose.Pose(
-                static_image_mode=True,
-                model_complexity=2,
-                min_detection_confidence=0.3,
-            ) as pose:
+            with self._lock:
+                pose = self._ensure_pose()
                 results = pose.process(rgb_image)
         except RuntimeError as exc:
             logger.warning("mediapipe_pose_runtime_error error=%s", exc)
@@ -80,10 +86,10 @@ class PoseEstimator:
         landmarks = [
             Landmark(
                 name=self._mp_pose.PoseLandmark(index).name.lower(),
-                x=float(landmark.x),
-                y=float(landmark.y),
+                x=self._clamp_unit(landmark.x),
+                y=self._clamp_unit(landmark.y),
                 z=float(landmark.z),
-                visibility=float(landmark.visibility),
+                visibility=self._clamp_unit(landmark.visibility),
             )
             for index, landmark in enumerate(pose_landmarks.landmark)
         ]
@@ -95,28 +101,20 @@ class PoseEstimator:
         )
 
     def _prepare_rgb_image(self, image: np.ndarray) -> np.ndarray:
-        if image.ndim != 3 or image.shape[2] not in {3, 4}:
-            raise ValueError("PoseEstimator expects an RGB or RGBA image array.")
+        return resize_longest_side(ensure_rgb_uint8(image), self.max_detection_side)
 
-        rgb_image = image[:, :, :3]
-        if rgb_image.dtype != np.uint8:
-            rgb_image = np.clip(rgb_image, 0, 255).astype(np.uint8)
-
-        height, width = rgb_image.shape[:2]
-        longest_side = max(height, width)
-        if longest_side > self.max_detection_side:
-            scale = self.max_detection_side / longest_side
-            resized_size = (
-                max(1, int(round(width * scale))),
-                max(1, int(round(height * scale))),
+    def _ensure_pose(self) -> object:
+        if self._pose is None:
+            self._pose = self._mp_pose.Pose(
+                static_image_mode=True,
+                model_complexity=2,
+                min_detection_confidence=0.3,
             )
-            pil_image = Image.fromarray(rgb_image, mode="RGB")
-            rgb_image = np.asarray(
-                pil_image.resize(resized_size, Image.Resampling.LANCZOS),
-                dtype=np.uint8,
-            )
+        return self._pose
 
-        return np.ascontiguousarray(rgb_image)
+    @staticmethod
+    def _clamp_unit(value: float) -> float:
+        return min(1.0, max(0.0, float(value)))
 
     @staticmethod
     def _log_debug(image: np.ndarray, detected_landmarks: bool) -> None:
