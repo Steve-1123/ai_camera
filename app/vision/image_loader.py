@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from io import BytesIO
 
@@ -8,6 +9,8 @@ from fastapi import UploadFile
 from PIL import Image, UnidentifiedImageError
 
 from app.schemas import ImageInfo
+
+logger = logging.getLogger(__name__)
 
 
 class ImageLoadError(ValueError):
@@ -28,10 +31,19 @@ async def load_upload_image(upload_file: UploadFile) -> LoadedImage:
     try:
         with Image.open(BytesIO(raw)) as pil_image:
             rgb_image = pil_image.convert("RGB")
-            image = np.asarray(rgb_image)
+            image = np.array(rgb_image, dtype=np.uint8)
             width, height = rgb_image.size
     except (UnidentifiedImageError, OSError) as exc:
         raise ImageLoadError("Uploaded file is not a valid image.") from exc
+
+    logger.info(
+        "image_loader_debug filename=%s image_shape=%s image_dtype=%s min_pixel=%s max_pixel=%s",
+        upload_file.filename,
+        image.shape,
+        image.dtype,
+        int(image.min()),
+        int(image.max()),
+    )
 
     return LoadedImage(
         image=image,
@@ -41,4 +53,3 @@ async def load_upload_image(upload_file: UploadFile) -> LoadedImage:
             height=height,
         ),
     )
-

@@ -78,4 +78,7 @@ def test_scene_classifier_returns_primary_category_and_candidates() -> None:
     assert result.primary_category
     assert result.candidates
     assert result.candidates[0].label == result.primary_category
-    assert result.model_name == "heuristic-color-v1"
+    assert result.model_name in {
+        "clip:openai/clip-vit-base-patch32",
+        "heuristic_rgb_fallback",
+    }

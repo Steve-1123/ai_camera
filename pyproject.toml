@@ -9,11 +9,13 @@ description = "MVP backend for image upload, pose landmarks, and scene classific
 requires-python = ">=3.9"
 dependencies = [
     "fastapi>=0.110",
-    "mediapipe>=0.10",
+    "mediapipe==0.10.9",
     "numpy>=1.26",
     "pillow>=10.0",
     "pydantic>=2.6",
     "python-multipart>=0.0.9",
+    "torch>=2.0",
+    "transformers>=4.40",
     "uvicorn[standard]>=0.27",
 ]
 
