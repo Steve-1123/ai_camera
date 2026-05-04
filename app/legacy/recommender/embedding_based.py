@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Optional
 
-from app.recommender.embedding_index import PoseEmbeddingIndex
-from app.recommender.text_encoder import PoseTextEncoder
-from app.schemas import EmbeddingPoseRecommendation, Pose, RecommendationRequest
+from app.legacy.recommender.embedding_index import PoseEmbeddingIndex
+from app.legacy.recommender.text_encoder import PoseTextEncoder
+from app.legacy.schemas import EmbeddingPoseRecommendation, Pose, RecommendationRequest
 
 
 class EmbeddingBasedPoseRecommender:

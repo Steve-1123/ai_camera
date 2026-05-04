@@ -3,7 +3,7 @@ from __future__ import annotations
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from app.schemas import Pose
+from app.legacy.schemas import Pose
 
 
 class PoseEmbeddingIndex:

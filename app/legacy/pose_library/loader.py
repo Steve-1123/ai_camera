@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Union
 
-from app.schemas import Pose
+from app.legacy.schemas import Pose
 
 DEFAULT_POSE_LIBRARY_PATH = Path(__file__).with_name("poses.json")
 

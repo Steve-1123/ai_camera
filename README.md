@@ -1,13 +1,24 @@
-# ai-photo-pose
+# ai-camera
 
-MVP FastAPI backend for an AI photography pose recommendation app.
+Narrow MVP FastAPI backend for image upload analysis.
 
-The current implementation is intentionally rule-based. Image analysis is mocked through explicit scene, style, and person context fields in the request.
+The current API accepts one uploaded image and returns:
+
+- basic image metadata
+- MediaPipe pose landmarks when a person is detected
+- a lightweight heuristic scene classification result
+
+Legacy pose recommendation code is kept under `app/legacy/` and is not imported by the default API.
+
+## Install
+
+```bash
+pip install -e ".[dev]"
+```
 
 ## Run
 
 ```bash
-pip install -e ".[dev]"
 uvicorn app.main:app --reload
 ```
 
@@ -17,21 +28,14 @@ uvicorn app.main:app --reload
 pytest
 ```
 
-## Endpoint
+## Endpoints
 
-`POST /recommend_pose`
+`GET /health`
 
-```json
-{
-  "scene": {
-    "scene_tags": ["urban", "street"],
-    "style_tags": ["editorial", "confident"]
-  },
-  "person": {
-    "age_group": "adult",
-    "body_type": "average",
-    "comfort_level": "medium",
-    "mobility_notes": []
-  }
-}
+`POST /analyze_image`
+
+```bash
+curl -X POST "http://127.0.0.1:8000/analyze_image" \
+  -F "image=@/path/to/photo.jpg"
 ```
+

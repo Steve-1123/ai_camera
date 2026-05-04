@@ -1,4 +1,4 @@
-from app.schemas import Pose, RecommendationRequest
+from app.legacy.schemas import Pose, RecommendationRequest
 
 
 class RuleBasedPoseRecommender:
