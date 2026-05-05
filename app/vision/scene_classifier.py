@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import logging
-import time
 from pathlib import Path
 
 import numpy as np
@@ -10,9 +8,7 @@ from huggingface_hub import scan_cache_dir
 
 from app.schemas import SceneCandidate, SceneClassificationResult
 
-logger = logging.getLogger(__name__)
-
-# CLIP 使用描述性 prompt 比单词 label 更稳定。
+# CLIP 使用描述性 prompt 比单词 label 更稳定，也更适合开放场景的背景识别。
 SCENE_PROMPTS = {
     "cafe": "a portrait photo taken in a cafe",
     "street": "a portrait photo taken on a city street",
@@ -26,64 +22,6 @@ SCENE_PROMPTS = {
     "hotel": "a portrait photo taken in a hotel",
     "museum": "a portrait photo taken in a museum or gallery",
 }
-
-SCENE_LABELS = [*SCENE_PROMPTS, "unknown"]
-
-# These fallback thresholds are intentionally coarse. They are hand-tuned guardrails
-# for when CLIP is unavailable, not a calibrated scene-recognition model.
-GREEN_DOMINANCE_MARGIN = 0.08
-GREEN_BLUE_MARGIN = 0.05
-BLUE_DOMINANCE_MARGIN = 0.08
-BRIGHT_SCENE_THRESHOLD = 0.45
-LOW_CONTRAST_THRESHOLD = 0.08
-DARK_SCENE_THRESHOLD = 0.35
-HIGH_CONTRAST_THRESHOLD = 0.22
-CLIP_RETRY_SECONDS = 300
-
-
-class HeuristicSceneClassifier:
-    model_name = "heuristic_rgb_fallback"
-
-    def classify(self, image: np.ndarray) -> SceneClassificationResult:
-        normalized = image.astype(np.float32) / 255.0
-        red = float(normalized[:, :, 0].mean())
-        green = float(normalized[:, :, 1].mean())
-        blue = float(normalized[:, :, 2].mean())
-        brightness = float(normalized.mean())
-        contrast = float(normalized.std())
-
-        scores = dict.fromkeys(SCENE_LABELS, 0.03)
-        scores["unknown"] = 0.2
-
-        if green > red + GREEN_DOMINANCE_MARGIN and green > blue + GREEN_BLUE_MARGIN:
-            scores["park"] = 0.72
-        elif blue > red + BLUE_DOMINANCE_MARGIN and brightness > BRIGHT_SCENE_THRESHOLD:
-            scores["beach"] = 0.68
-            scores["park"] = 0.35
-        elif contrast < LOW_CONTRAST_THRESHOLD and brightness > BRIGHT_SCENE_THRESHOLD:
-            scores["wall"] = 0.7
-            scores["indoor"] = 0.42
-        elif brightness < DARK_SCENE_THRESHOLD:
-            scores["indoor"] = 0.58
-            scores["restaurant"] = 0.36
-            scores["hotel"] = 0.32
-        elif contrast > HIGH_CONTRAST_THRESHOLD:
-            scores["street"] = 0.54
-            scores["landmark"] = 0.34
-        else:
-            scores["unknown"] = 0.55
-            scores["indoor"] = 0.3
-
-        candidates = [
-            SceneCandidate(label=label, score=round(score, 3))
-            for label, score in sorted(scores.items(), key=lambda item: item[1], reverse=True)
-        ][:5]
-
-        return SceneClassificationResult(
-            primary_category=candidates[0].label if candidates else "unknown",
-            candidates=candidates,
-            model_name=self.model_name,
-        )
 
 
 class ClipSceneClassifier:
@@ -158,35 +96,8 @@ class ClipSceneClassifier:
         )
 
 
-class SceneClassifier:
-    def __init__(self) -> None:
-        self._fallback = HeuristicSceneClassifier()
-        self.impl: ClipSceneClassifier | HeuristicSceneClassifier | None = None
-        self._next_clip_retry_at = 0.0
-        self._load_clip()
-
-    def close(self) -> None:
-        if hasattr(self.impl, "close"):
-            self.impl.close()
-
-    def classify(self, image: np.ndarray) -> SceneClassificationResult:
-        if not isinstance(self.impl, ClipSceneClassifier) and time.monotonic() >= self._next_clip_retry_at:
-            self._load_clip()
-
-        impl = self.impl or self._fallback
-        return impl.classify(image)
-
-    def _load_clip(self) -> None:
-        try:
-            self.impl = ClipSceneClassifier()
-        except (ImportError, OSError, RuntimeError, ValueError) as exc:
-            logger.warning(
-                "clip_scene_classifier_unavailable fallback=heuristic retry_seconds=%s error=%s",
-                CLIP_RETRY_SECONDS,
-                exc,
-            )
-            self.impl = self._fallback
-            self._next_clip_retry_at = time.monotonic() + CLIP_RETRY_SECONDS
+class SceneClassifier(ClipSceneClassifier):
+    """Primary background classifier. Kept as a stable app-level name for callers."""
 
 
 def ensure_rgb_uint8(image: np.ndarray) -> np.ndarray:

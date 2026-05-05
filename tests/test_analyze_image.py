@@ -7,10 +7,18 @@ import numpy as np
 from fastapi.testclient import TestClient
 from PIL import Image
 
+import app.main as main_module
 from app.main import app
+from app.schemas import (
+    AnalyzeImagePathResponse,
+    ImageInfo,
+    ImageStorageResult,
+    PoseEstimationResult,
+    SceneCandidate,
+    SceneClassificationResult,
+)
 from app.vision.image_loader import ImageLoadError, load_upload_image
 from app.vision.pose_estimator import PoseEstimator
-from app.vision.scene_classifier import HeuristicSceneClassifier
 
 
 client = TestClient(app)
@@ -45,14 +53,41 @@ def test_health_returns_ok() -> None:
     assert response.json() == {"status": "ok"}
 
 
-def test_analyze_image_rejects_non_image_file() -> None:
+def test_analyze_image_path_endpoint_returns_analysis_when_storage_disabled(monkeypatch) -> None:
+    def fake_analyze_image_path(**kwargs):
+        return AnalyzeImagePathResponse(
+            image_info=ImageInfo(filename="sample.jpg", width=16, height=12),
+            pose=PoseEstimationResult(has_person=False, landmark_count=0, landmarks=[]),
+            scene=SceneClassificationResult(
+                primary_category="street",
+                candidates=[SceneCandidate(label="street", score=0.9)],
+                model_name="test_scene",
+            ),
+            storage=ImageStorageResult(requested=False),
+        )
+
+    monkeypatch.setattr(main_module, "analyze_image_path", fake_analyze_image_path)
+
     response = client.post(
-        "/analyze_image",
-        files={"image": ("notes.txt", b"not an image", "text/plain")},
+        "/analyze_image_path",
+        json={"image_url": "images/sample.jpg", "should_store": False},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["pose"]["has_person"] is False
+    assert body["scene"]["primary_category"] == "street"
+    assert body["storage"]["requested"] is False
+
+
+def test_analyze_image_path_endpoint_rejects_empty_image_url() -> None:
+    response = client.post(
+        "/analyze_image_path",
+        json={"image_url": "", "should_store": False},
     )
 
     assert response.status_code == 400
-    assert "valid image" in response.json()["detail"]
+    assert "image_url cannot be empty" in response.json()["detail"]
 
 
 def test_image_loader_reads_image_metadata_and_rgb_array() -> None:
@@ -88,12 +123,11 @@ def test_pose_estimator_blank_image_does_not_crash() -> None:
         assert result.landmarks == []
 
 
-def test_scene_classifier_returns_primary_category_and_candidates() -> None:
-    image = np.full((24, 24, 3), (40, 180, 60), dtype=np.uint8)
+def test_analyze_image_path_endpoint_rejects_invalid_image_path() -> None:
+    response = client.post(
+        "/analyze_image_path",
+        json={"image_url": "missing-image.jpg", "should_store": False},
+    )
 
-    result = HeuristicSceneClassifier().classify(image)
-
-    assert result.primary_category
-    assert result.candidates
-    assert result.candidates[0].label == result.primary_category
-    assert result.model_name == "heuristic_rgb_fallback"
+    assert response.status_code == 400
+    assert "Image could not be loaded" in response.json()["detail"]

@@ -1,39 +1,21 @@
 from __future__ import annotations
 
-import asyncio
-import threading
-from contextlib import asynccontextmanager
-from typing import Annotated
+import argparse
 
-import numpy as np
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import FastAPI, HTTPException
 
-from app.schemas import AnalyzeImageResponse, PoseEstimationResult, SceneClassificationResult
-from app.vision.image_loader import ImageLoadError, load_upload_image
-from app.vision.pose_estimator import PoseEstimator
-from app.vision.scene_classifier import SceneClassifier
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    app.state.pose_estimator = None
-    app.state.scene_classifier = None
-    app.state.pose_lock = threading.Lock()
-    app.state.scene_lock = threading.Lock()
-    try:
-        yield
-    finally:
-        for service_name in ("pose_estimator", "scene_classifier"):
-            service = getattr(app.state, service_name, None)
-            if service is not None and hasattr(service, "close"):
-                service.close()
+from app.schemas import (
+    AnalyzeImagePathRequest,
+    AnalyzeImagePathResponse,
+    PoseEstimationResult,
+)
+from app.services.image_analysis_service import ImageAnalysisError, analyze_image_path
 
 
 app = FastAPI(
     title="AI Camera",
-    description="MVP backend for image upload, pose landmarks, and scene classification.",
+    description="MVP backend for image path analysis, pose landmarks, scene classification, and optional storage.",
     version="0.2.0",
-    lifespan=lifespan,
 )
 
 
@@ -42,39 +24,84 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.post("/analyze_image", response_model=AnalyzeImageResponse)
-async def analyze_image(
-    request: Request,
-    image: Annotated[UploadFile, File(description="Image file to analyze.")],
-) -> AnalyzeImageResponse:
+@app.post("/analyze_image_path", response_model=AnalyzeImagePathResponse)
+def analyze_image_path_endpoint(request: AnalyzeImagePathRequest) -> AnalyzeImagePathResponse:
     try:
-        loaded_image = await load_upload_image(image)
-    except ImageLoadError as exc:
+        return analyze_image_path(
+            image_url=request.image_url,
+            should_store=request.should_store,
+            source=request.source,
+            detector=request.detector,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ImageAnalysisError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    pose, scene = await asyncio.gather(
-        asyncio.to_thread(_estimate_pose, request.app, loaded_image.image),
-        asyncio.to_thread(_classify_scene, request.app, loaded_image.image),
-    )
 
-    return AnalyzeImageResponse(
-        image_info=loaded_image.info,
-        pose=pose,
-        scene=scene,
-    )
+def main() -> int:
+    parser = argparse.ArgumentParser(description="AI Camera CLI")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("init-db", help="Create database tables from SQLAlchemy models.")
+
+    analyze_parser = subparsers.add_parser("analyze", help="Analyze an image and store results in MySQL.")
+    analyze_parser.add_argument("--image-url", required=True)
+    analyze_parser.add_argument("--source", default="upload")
+    analyze_parser.add_argument("--detector", default="local_pose_estimator")
+
+    subparsers.add_parser("list-library-poses", help="List poses from app/pose_library/poses.json.")
+    args = parser.parse_args()
+
+    try:
+        if args.command == "init-db":
+            from app.core.database import init_db
+
+            init_db()
+            print("database initialized")
+            return 0
+
+        if args.command == "analyze":
+            result = analyze_image_path(
+                image_url=args.image_url,
+                should_store=True,
+                source=args.source,
+                detector=args.detector,
+            )
+            _print_analysis_result(result)
+            return 0
+
+        if args.command == "list-library-poses":
+            from app.services.pose_library_service import get_all_library_poses
+
+            poses = get_all_library_poses()
+            for pose in poses:
+                print(f"{pose['pose_id']}\t{pose['display_name']}")
+            print(f"total: {len(poses)}")
+            return 0
+    except Exception as exc:
+        print(f"error: {exc}")
+        return 1
+
+    parser.print_help()
+    return 1
 
 
-def _estimate_pose(app: FastAPI, image: np.ndarray) -> PoseEstimationResult:
-    with app.state.pose_lock:
-        if app.state.pose_estimator is None:
-            app.state.pose_estimator = PoseEstimator()
-        estimator = app.state.pose_estimator
-    return estimator.estimate(image)
+def _print_analysis_result(result: AnalyzeImagePathResponse) -> None:
+    print(f"image_id: {result.storage.image_id}")
+    print(f"analysis_status: {result.storage.analysis_status}")
+    print(f"pose count: {result.storage.pose_count}")
+    print("pose_name: detected_person" if result.pose.has_person else "pose_name: none")
+    print(f"confidence: {_mean_visibility(result.pose)}")
+    print(f"keypoints count: {result.storage.keypoint_count}")
+    if result.storage.error:
+        print(f"storage_error: {result.storage.error}")
 
 
-def _classify_scene(app: FastAPI, image: np.ndarray) -> SceneClassificationResult:
-    with app.state.scene_lock:
-        if app.state.scene_classifier is None:
-            app.state.scene_classifier = SceneClassifier()
-        classifier = app.state.scene_classifier
-    return classifier.classify(image)
+def _mean_visibility(pose: PoseEstimationResult) -> float | None:
+    if not pose.landmarks:
+        return None
+    return round(sum(landmark.visibility for landmark in pose.landmarks) / len(pose.landmarks), 4)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
