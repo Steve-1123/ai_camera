@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -34,7 +36,24 @@ class SceneClassificationResult(BaseModel):
     model_name: str
 
 
-class AnalyzeImageResponse(BaseModel):
+class AnalyzeImagePathRequest(BaseModel):
+    image_url: str
+    should_store: bool = False
+    source: str = "upload"
+    detector: str = "local_pose_estimator"
+
+
+class ImageStorageResult(BaseModel):
+    requested: bool
+    image_id: Optional[int] = None
+    analysis_status: Optional[str] = None
+    pose_count: int = 0
+    keypoint_count: int = 0
+    error: Optional[str] = None
+
+
+class AnalyzeImagePathResponse(BaseModel):
     image_info: ImageInfo
     pose: PoseEstimationResult
     scene: SceneClassificationResult
+    storage: ImageStorageResult
