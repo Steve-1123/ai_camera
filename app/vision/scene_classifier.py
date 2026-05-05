@@ -9,7 +9,6 @@ from PIL import Image
 from huggingface_hub import scan_cache_dir
 
 from app.schemas import SceneCandidate, SceneClassificationResult
-from app.vision.image_utils import ensure_rgb_uint8
 
 logger = logging.getLogger(__name__)
 
@@ -188,3 +187,14 @@ class SceneClassifier:
             )
             self.impl = self._fallback
             self._next_clip_retry_at = time.monotonic() + CLIP_RETRY_SECONDS
+
+
+def ensure_rgb_uint8(image: np.ndarray) -> np.ndarray:
+    if image.ndim != 3 or image.shape[2] not in {3, 4}:
+        raise ValueError("Expected an RGB or RGBA image array.")
+
+    rgb_image = image[:, :, :3]
+    if rgb_image.dtype != np.uint8:
+        rgb_image = np.clip(rgb_image, 0, 255).astype(np.uint8)
+
+    return np.ascontiguousarray(rgb_image)

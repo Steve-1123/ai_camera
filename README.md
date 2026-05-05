@@ -1,31 +1,32 @@
 # ai-camera
 
-Narrow MVP FastAPI backend for image upload analysis.
+Narrow MVP FastAPI backend for image upload analysis and stored pose ingestion.
 
 The current API accepts one uploaded image and returns:
 
 - basic image metadata
 - MediaPipe pose landmarks when a person is detected
-- a lightweight heuristic scene classification result
+- CLIP scene classification with a heuristic fallback
+- stored pose ingestion into `app/pose_library/poses.json`
 
-Legacy pose recommendation code is kept under `app/legacy/` and is not imported by the default API.
+Recommendation APIs and old recommender modules are intentionally not part of the current MVP.
 
 ## Install
 
 ```bash
-pip install -e ".[dev]"
+venv/bin/pip install -r requirement.txt
 ```
 
 ## Run
 
 ```bash
-uvicorn app.main:app --reload
+venv/bin/uvicorn app.main:app --reload
 ```
 
 ## Test
 
 ```bash
-pytest
+venv/bin/python -m pytest
 ```
 
 ## Endpoints
@@ -39,3 +40,12 @@ curl -X POST "http://127.0.0.1:8000/analyze_image" \
   -F "image=@/path/to/photo.jpg"
 ```
 
+## Ingest Pose Image
+
+```bash
+venv/bin/python scripts/ingest_pose_image.py \
+  --pose-id street_side_hair_touch_002 \
+  --image images/example.jpg \
+  --poses-json app/pose_library/poses.json \
+  --overwrite
+```
