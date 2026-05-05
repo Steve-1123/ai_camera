@@ -1,44 +1,40 @@
 from __future__ import annotations
 
-from typing import Literal, Optional
-
 from pydantic import BaseModel, Field
 
 
-Difficulty = Literal["easy", "medium", "hard"]
-ComfortLevel = Literal["low", "medium", "high"]
+class ImageInfo(BaseModel):
+    filename: str
+    width: int = Field(ge=1)
+    height: int = Field(ge=1)
 
 
-class Pose(BaseModel):
-    id: str
+class Landmark(BaseModel):
     name: str
-    description: str
-    scene_tags: list[str] = Field(default_factory=list)
-    style_tags: list[str] = Field(default_factory=list)
-    difficulty: Difficulty
-    popularity: int = Field(ge=0, le=100)
-    suitable_body_types: list[str] = Field(default_factory=list)
-    suitable_age_groups: list[str] = Field(default_factory=list)
-    mobility_requirements: list[str] = Field(default_factory=list)
-    score: Optional[float] = None
+    x: float = Field(ge=0.0, le=1.0)
+    y: float = Field(ge=0.0, le=1.0)
+    z: float
+    visibility: float = Field(ge=0.0, le=1.0)
 
 
-class SceneContext(BaseModel):
-    scene_tags: list[str] = Field(default_factory=list)
-    style_tags: list[str] = Field(default_factory=list)
+class PoseEstimationResult(BaseModel):
+    has_person: bool
+    landmark_count: int = Field(ge=0)
+    landmarks: list[Landmark] = Field(default_factory=list)
 
 
-class PersonContext(BaseModel):
-    age_group: Optional[str] = None
-    body_type: Optional[str] = None
-    comfort_level: ComfortLevel = "medium"
-    mobility_notes: list[str] = Field(default_factory=list)
+class SceneCandidate(BaseModel):
+    label: str
+    score: float = Field(ge=0.0, le=1.0)
 
 
-class RecommendationRequest(BaseModel):
-    scene: SceneContext
-    person: PersonContext = Field(default_factory=PersonContext)
+class SceneClassificationResult(BaseModel):
+    primary_category: str
+    candidates: list[SceneCandidate] = Field(default_factory=list)
+    model_name: str
 
 
-class RecommendationResponse(BaseModel):
-    poses: list[Pose]
+class AnalyzeImageResponse(BaseModel):
+    image_info: ImageInfo
+    pose: PoseEstimationResult
+    scene: SceneClassificationResult

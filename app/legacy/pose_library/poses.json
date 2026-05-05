@@ -1,0 +1,323 @@
+{
+  "schema_version": "1.0.0",
+  "poses": [
+    {
+      "pose_id": "street_walk_lookback_001",
+      "display_name": "街头回头走路",
+      "category": "standing_dynamic",
+      "scene_tags": ["street", "city", "outdoor"],
+      "object_tags": ["road", "sidewalk"],
+      "style_tags": ["natural", "travel"],
+      "difficulty": 2,
+      "popularity": 0.82,
+      "novelty": 0.46,
+      "pose_features": {
+        "body_rotation_deg": 140,
+        "head_yaw_deg": -35
+      },
+      "instructions": [
+        "向前走一步",
+        "回头看镜头",
+        "手自然摆动"
+      ]
+    },
+    {
+      "pose_id": "street_side_hair_touch_002",
+      "display_name": "侧身撩发",
+      "category": "standing_static",
+      "scene_tags": ["street"],
+      "object_tags": ["wall"],
+      "style_tags": ["soft"],
+      "difficulty": 1,
+      "popularity": 0.78,
+      "novelty": 0.42,
+      "pose_features": {
+        "body_rotation_deg": 30,
+        "head_tilt_deg": -6
+      },
+      "instructions": [
+        "身体侧一点",
+        "一只手碰头发"
+      ]
+    },
+    {
+      "pose_id": "street_cross_leg_003",
+      "display_name": "交叉腿站姿",
+      "category": "standing_static",
+      "scene_tags": ["street"],
+      "object_tags": ["ground"],
+      "style_tags": ["slim"],
+      "difficulty": 1,
+      "popularity": 0.84,
+      "novelty": 0.35,
+      "pose_features": {
+        "leg_state": "cross"
+      },
+      "instructions": [
+        "一条腿交叉",
+        "身体微侧"
+      ]
+    },
+    {
+      "pose_id": "street_hands_pocket_004",
+      "display_name": "插兜站姿",
+      "category": "standing_static",
+      "scene_tags": ["street"],
+      "object_tags": ["building"],
+      "style_tags": ["cool"],
+      "difficulty": 1,
+      "popularity": 0.72,
+      "novelty": 0.5,
+      "pose_features": {
+        "arm_state": "pocket"
+      },
+      "instructions": [
+        "双手插口袋",
+        "身体侧一点"
+      ]
+    },
+
+    {
+      "pose_id": "wall_lean_005",
+      "display_name": "靠墙站",
+      "category": "leaning",
+      "scene_tags": ["wall"],
+      "object_tags": ["wall"],
+      "style_tags": ["casual"],
+      "difficulty": 1,
+      "popularity": 0.7,
+      "novelty": 0.4,
+      "pose_features": {},
+      "instructions": ["靠墙站", "放松"]
+    },
+    {
+      "pose_id": "wall_touch_006",
+      "display_name": "手碰墙",
+      "category": "standing",
+      "scene_tags": ["wall"],
+      "object_tags": ["wall"],
+      "style_tags": ["soft"],
+      "difficulty": 1,
+      "popularity": 0.6,
+      "novelty": 0.6,
+      "pose_features": {},
+      "instructions": ["一只手碰墙"]
+    },
+    {
+      "pose_id": "wall_cross_arm_007",
+      "display_name": "抱臂靠墙",
+      "category": "standing",
+      "scene_tags": ["wall"],
+      "object_tags": ["wall"],
+      "style_tags": ["cool"],
+      "difficulty": 1,
+      "popularity": 0.65,
+      "novelty": 0.5,
+      "pose_features": {},
+      "instructions": ["抱臂", "靠墙"]
+    },
+
+    {
+      "pose_id": "cafe_chin_008",
+      "display_name": "托腮",
+      "category": "sitting",
+      "scene_tags": ["cafe"],
+      "object_tags": ["table"],
+      "style_tags": ["cute"],
+      "difficulty": 1,
+      "popularity": 0.85,
+      "novelty": 0.3,
+      "pose_features": {},
+      "instructions": ["手托下巴"]
+    },
+    {
+      "pose_id": "cafe_window_009",
+      "display_name": "看窗外",
+      "category": "sitting",
+      "scene_tags": ["cafe"],
+      "object_tags": ["window"],
+      "style_tags": ["ins"],
+      "difficulty": 1,
+      "popularity": 0.8,
+      "novelty": 0.5,
+      "pose_features": {},
+      "instructions": ["看窗外"]
+    },
+    {
+      "pose_id": "cafe_cup_010",
+      "display_name": "捧杯",
+      "category": "sitting",
+      "scene_tags": ["cafe"],
+      "object_tags": ["cup"],
+      "style_tags": ["cozy"],
+      "difficulty": 1,
+      "popularity": 0.79,
+      "novelty": 0.4,
+      "pose_features": {},
+      "instructions": ["双手捧杯"]
+    },
+
+    {
+      "pose_id": "nature_walk_011",
+      "display_name": "自然走路",
+      "category": "walking",
+      "scene_tags": ["nature"],
+      "object_tags": ["path"],
+      "style_tags": ["natural"],
+      "difficulty": 1,
+      "popularity": 0.8,
+      "novelty": 0.5,
+      "pose_features": {},
+      "instructions": ["自然走"]
+    },
+    {
+      "pose_id": "nature_sit_012",
+      "display_name": "草地坐",
+      "category": "sitting",
+      "scene_tags": ["nature"],
+      "object_tags": ["grass"],
+      "style_tags": ["fresh"],
+      "difficulty": 2,
+      "popularity": 0.7,
+      "novelty": 0.5,
+      "pose_features": {},
+      "instructions": ["坐草地"]
+    },
+    {
+      "pose_id": "nature_look_013",
+      "display_name": "看花",
+      "category": "standing",
+      "scene_tags": ["nature"],
+      "object_tags": ["flower"],
+      "style_tags": ["soft"],
+      "difficulty": 1,
+      "popularity": 0.6,
+      "novelty": 0.6,
+      "pose_features": {},
+      "instructions": ["看花"]
+    },
+
+    {
+      "pose_id": "stairs_sit_014",
+      "display_name": "台阶坐",
+      "category": "sitting",
+      "scene_tags": ["stairs"],
+      "object_tags": ["stairs"],
+      "style_tags": ["casual"],
+      "difficulty": 2,
+      "popularity": 0.7,
+      "novelty": 0.5,
+      "pose_features": {},
+      "instructions": ["坐台阶"]
+    },
+    {
+      "pose_id": "stairs_walk_015",
+      "display_name": "楼梯走",
+      "category": "walking",
+      "scene_tags": ["stairs"],
+      "object_tags": ["stairs"],
+      "style_tags": ["dynamic"],
+      "difficulty": 2,
+      "popularity": 0.7,
+      "novelty": 0.6,
+      "pose_features": {},
+      "instructions": ["走楼梯"]
+    },
+
+    {
+      "pose_id": "beach_back_016",
+      "display_name": "海边回头",
+      "category": "standing",
+      "scene_tags": ["beach"],
+      "object_tags": ["sea"],
+      "style_tags": ["travel"],
+      "difficulty": 1,
+      "popularity": 0.85,
+      "novelty": 0.4,
+      "pose_features": {},
+      "instructions": ["背对海", "回头"]
+    },
+    {
+      "pose_id": "beach_walk_017",
+      "display_name": "海边走",
+      "category": "walking",
+      "scene_tags": ["beach"],
+      "object_tags": ["sand"],
+      "style_tags": ["summer"],
+      "difficulty": 1,
+      "popularity": 0.8,
+      "novelty": 0.5,
+      "pose_features": {},
+      "instructions": ["沿海走"]
+    },
+
+    {
+      "pose_id": "mirror_018",
+      "display_name": "镜子自拍",
+      "category": "standing",
+      "scene_tags": ["indoor"],
+      "object_tags": ["mirror"],
+      "style_tags": ["ootd"],
+      "difficulty": 1,
+      "popularity": 0.75,
+      "novelty": 0.6,
+      "pose_features": {},
+      "instructions": ["镜子拍"]
+    },
+    {
+      "pose_id": "sofa_019",
+      "display_name": "沙发坐",
+      "category": "sitting",
+      "scene_tags": ["indoor"],
+      "object_tags": ["sofa"],
+      "style_tags": ["cozy"],
+      "difficulty": 1,
+      "popularity": 0.7,
+      "novelty": 0.5,
+      "pose_features": {},
+      "instructions": ["坐沙发"]
+    },
+
+    {
+      "pose_id": "point_view_020",
+      "display_name": "指向远方",
+      "category": "standing",
+      "scene_tags": ["travel"],
+      "object_tags": ["landmark"],
+      "style_tags": ["fun"],
+      "difficulty": 1,
+      "popularity": 0.65,
+      "novelty": 0.6,
+      "pose_features": {},
+      "instructions": ["指远方"]
+    },
+
+    {
+      "pose_id": "big_scene_021",
+      "display_name": "小人构图",
+      "category": "standing",
+      "scene_tags": ["landscape"],
+      "object_tags": ["sky"],
+      "style_tags": ["cinematic"],
+      "difficulty": 2,
+      "popularity": 0.6,
+      "novelty": 0.8,
+      "pose_features": {},
+      "instructions": ["站远"]
+    },
+
+    {
+      "pose_id": "generic_022",
+      "display_name": "自然站",
+      "category": "standing",
+      "scene_tags": ["all"],
+      "object_tags": [],
+      "style_tags": ["natural"],
+      "difficulty": 1,
+      "popularity": 0.9,
+      "novelty": 0.2,
+      "pose_features": {},
+      "instructions": ["自然站"]
+    }
+  ]
+}
